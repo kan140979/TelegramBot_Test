@@ -1,28 +1,65 @@
 import telebot
+import re
+from config import API_TOKEN  
 
-# Замените 'YOUR_API_TOKEN' на ваш реальный API токен, полученный у BotFather
-API_TOKEN = "6888164226:AAExGsPcgA1WLAuwnpfd7D7YxDBTqW41rWg"
+
 
 bot = telebot.TeleBot(API_TOKEN)
 
-
-@bot.message_handler(commands=["start", "help"])
+# Обработчик команды /start
+@bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(
-        message, "Привет! Я бот. Напиши 'Привет, бот!' или 'как дела?' чтобы получить ответ."
+    bot.reply_to(message, "Привет! Я ваш Telegram-бот. Чем могу помочь?")
+
+# Обработчик команды /help
+@bot.message_handler(commands=['help'])
+def send_help(message):
+    help_text = (
+        "Вот список команд, которые я поддерживаю:\n"
+        "/start - Начать работу с ботом\n"
+        "/help - Показать это сообщение\n"
+        "/perevorot <текст> - Перевернуть текст\n"
+        "/caps <текст> - Преобразовать текст в заглавные буквы\n"
+        "/cut <текст> - Удалить все гласные буквы из текста"
     )
+    bot.reply_to(message, help_text)
 
+# Обработчик команды /perevorot
+@bot.message_handler(commands=['perevorot'])
+def reverse_text(message):
+    # Получаем текст после команды /perevorot
+    text_to_reverse = message.text[len('/perevorot '):]
+    
+    # Переворачиваем текст
+    reversed_text = text_to_reverse[::-1]
+    
+    # Отправляем перевернутый текст обратно пользователю
+    bot.reply_to(message, reversed_text)
 
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    if message.text.lower() == "привет, бот!":
-        bot.reply_to(message, "Привет, бот!")
-    elif message.text.lower() == "как дела?":
-        bot.reply_to(message, "Всё хорошо, спасибо!")
-    else:
-        bot.reply_to(message, "Извините, я вас не понимаю.")
+# Обработчик команды /caps
+@bot.message_handler(commands=['caps'])
+def caps_text(message):
+    # Получаем текст после команды /caps
+    text_to_caps = message.text[len('/caps '):]
+    
+    # Преобразуем текст в заглавные буквы
+    caps_text = text_to_caps.upper()
+    
+    # Отправляем текст в заглавных буквах обратно пользователю
+    bot.reply_to(message, caps_text)
 
+# Обработчик команды /cut
+@bot.message_handler(commands=['cut'])
+def cut_vowels(message):
+    # Получаем текст после команды /cut
+    text_to_cut = message.text[len('/cut '):]
+    
+    # Удаляем все гласные буквы
+    vowels_pattern = r'[AEIOUaeiouАЕЁИОУЫЭЮЯаеёиоуыэюя]'
+    cut_text = re.sub(vowels_pattern, '', text_to_cut)
+    
+    # Отправляем текст без гласных обратно пользователю
+    bot.reply_to(message, cut_text)
 
-if __name__ == "__main__":
-    print("Бот запущен и готов к работе")
-    bot.polling()
+# Основной цикл обработки сообщений
+bot.polling()
