@@ -1,3 +1,4 @@
+# чат с нейросетью
 from openai import OpenAI
 from config import API_KEY_PROXY
 
@@ -28,7 +29,7 @@ def chat_with_gpt():
 
         print(f"GPT: {answer}")
 
-        conversation_history.append({"role": "assistant", "content": answer})
+        conversation_history.append({"role": "system", "content": "отвечай в научном стиле"})
 
 
 if __name__ == "__main__":

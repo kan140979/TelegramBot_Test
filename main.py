@@ -1,15 +1,23 @@
+# телеграмм бот с набором команд
 import re
 import telebot
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from config import API_TOKEN
 
-
 bot = telebot.TeleBot(API_TOKEN)
+
+# Создаем кнопку "Действия" и клавиатуру
+button_actions = KeyboardButton("Действия")
+keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+keyboard.add(button_actions)
 
 
 # Обработчик команды /start
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
-    bot.reply_to(message, "Привет! Я ваш Telegram-бот. Чем могу помочь?")
+    bot.reply_to(
+        message, "Привет! Я ваш Telegram-бот. Чем могу помочь?", reply_markup=keyboard
+    )
 
 
 # Обработчик команды /help
@@ -24,59 +32,45 @@ def send_help(message):
         "/cut <текст> - Удалить все гласные буквы из текста\n"
         "/count <текст> - Подсчитать количество символов в тексте"
     )
-    bot.reply_to(message, help_text)
+    bot.reply_to(message, help_text, reply_markup=keyboard)
+
+
+# Обработчик нажатия кнопки "Действия"
+@bot.message_handler(func=lambda message: message.text == "Действия")
+def handle_actions(message):
+    bot.reply_to(message, "Привет!")
 
 
 # Обработчик команды /perevorot
 @bot.message_handler(commands=["perevorot"])
 def reverse_text(message):
-    # Получаем текст после команды /perevorot
     text_to_reverse = message.text[len("/perevorot ") :]
-
-    # Переворачиваем текст
     reversed_text = text_to_reverse[::-1]
-
-    # Отправляем перевернутый текст обратно пользователю
     bot.reply_to(message, reversed_text)
 
 
 # Обработчик команды /caps
 @bot.message_handler(commands=["caps"])
 def caps_text(message):
-    # Получаем текст после команды /caps
     text_to_caps = message.text[len("/caps ") :]
-
-    # Преобразуем текст в заглавные буквы
     caps_text = text_to_caps.upper()
-
-    # Отправляем текст в заглавных буквах обратно пользователю
     bot.reply_to(message, caps_text)
 
 
 # Обработчик команды /cut
 @bot.message_handler(commands=["cut"])
 def cut_vowels(message):
-    # Получаем текст после команды /cut
     text_to_cut = message.text[len("/cut ") :]
-
-    # Удаляем все гласные буквы
     vowels_pattern = r"[AEIOUaeiouАЕЁИОУЫЭЮЯаеёиоуыэюя]"
     cut_text = re.sub(vowels_pattern, "", text_to_cut)
-
-    # Отправляем текст без гласных обратно пользователю
     bot.reply_to(message, cut_text)
 
 
 # Обработчик команды /count
 @bot.message_handler(commands=["count"])
 def count_characters(message):
-    # Получаем текст после команды /count
     text_to_count = message.text[len("/count ") :]
-
-    # Подсчитываем количество символов
     char_count = len(text_to_count)
-
-    # Отправляем количество символов обратно пользователю
     response = f"Количество символов: {char_count}"
     bot.reply_to(message, response)
 
