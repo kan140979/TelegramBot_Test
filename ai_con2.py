@@ -1,21 +1,51 @@
 import logging
+import logging.handlers
 import os
+import time
+from datetime import datetime
 import telebot
+
 from openai import OpenAI
-from config import API_TOKEN, API_KEY_PROXY
+from config import (
+    API_TOKEN,
+    API_KEY_PROXY,
+    MAIL_USER,
+    MAIL_APP_PASSWORD,
+    MAIL_FROM,
+    MAIL_TO,
+)
 
 # Настройка логирования
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+LOG_DIR = "logs"
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+# Получаем текущую дату в формате YYYY-MM-DD
+current_date = datetime.now().strftime("%Y-%m-%d")
 
 logging.basicConfig(
-    filename=os.path.join(log_dir, "bot.log"),
+    filename=os.path.join(LOG_DIR, f"chatgpt_bot_{current_date}.log"),
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    encoding='utf-8'
+    encoding="utf-8",
 )
+
+# Настройка обработчика для отправки критических сообщений по электронной почте
+mail_handler = logging.handlers.SMTPHandler(
+    mailhost=("smtp.gmail.com", 587),
+    fromaddr=MAIL_FROM,
+    toaddrs=[MAIL_TO],  # Отправка на адрес
+    subject="Критическое сообщение журнала",
+    credentials=(MAIL_USER, MAIL_APP_PASSWORD),
+    secure=(),
+)
+mail_handler.setLevel(logging.CRITICAL)  # Уровень логирования для отправки по почте
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+mail_handler.setFormatter(formatter)
+
+# Добавление обработчика к логгеру
+logging.getLogger().addHandler(mail_handler)
 
 client = OpenAI(
     api_key=API_KEY_PROXY,
@@ -41,7 +71,8 @@ def get_gpt_response(user_id, user_input):
         )
         answer = response.choices[0].message.content
         conversation_history.append(
-            {"role": "system", "content": "отвечай в деловом стиле"}
+            # {"role": "system", "content": "отвечай в неформальном стиле"}
+            {"role": "system", "content": ""}
         )
         logging.info(f"Ответ для пользователя {user_id}: {answer}")
         return answer
@@ -70,9 +101,12 @@ def handle_message(message):
 
 
 if __name__ == "__main__":
-    logging.info("Бот запущен...")
-    print("Бот запущен...")
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        logging.critical(f"Критическая ошибка в работе бота: {str(e)}")
+    logging.info("ChatGPT Bot запущен...")
+    print("ChatGPT Bot запущен...")
+    while True:
+        try:
+            bot.polling()
+        except Exception as e:
+            logging.critical(f"Критическая ошибка в работе бота: {str(e)}")
+            time.sleep(5)
+            continue
